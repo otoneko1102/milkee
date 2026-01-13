@@ -1,5 +1,5 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 
 interface Props {
   title: string;
@@ -8,22 +8,21 @@ interface Props {
   url?: string;
 }
 
-const { 
-  title, 
+const {
+  title,
   description = "A delightful build tool for CoffeeScript. Simple, fast, and creamy smooth.",
   image = "https://milkee.oto.im/img/milkee-logo.png",
-  url = "https://milkee.oto.im"
+  url = "https://milkee.oto.im",
 } = Astro.props;
 
 const currentYear = new Date().getFullYear();
 const startYear = 2025;
 
-const yearRange = startYear === currentYear 
-  ? startYear 
-  : `${startYear} - ${currentYear}`;
+const yearRange =
+  startYear === currentYear ? startYear : `${startYear} - ${currentYear}`;
 
 const pageTitle = `${title} | Milkee`;
-const pageUrl = `${url}${Astro.url.pathname === '/' ? '' : Astro.url.pathname}`;
+const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
 ---
 
 <!doctype html>
@@ -34,7 +33,7 @@ const pageUrl = `${url}${Astro.url.pathname === '/' ? '' : Astro.url.pathname}`;
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
-    
+
     <!-- Open Graph / OGP -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
@@ -43,18 +42,19 @@ const pageUrl = `${url}${Astro.url.pathname === '/' ? '' : Astro.url.pathname}`;
     <meta property="og:url" content={pageUrl} />
     <meta property="og:site_name" content="Milkee" />
     <meta property="og:locale" content="ja_JP" />
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={pageTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
-    
+
     <link rel="icon" type="image/png" href="/img/milkee-logo.png" />
     <link rel="canonical" href={pageUrl} />
   </head>
   <body>
-    <header style="
+    <header
+      style="
       position: fixed;
       top: 0;
       left: 0;
@@ -64,30 +64,47 @@ const pageUrl = `${url}${Astro.url.pathname === '/' ? '' : Astro.url.pathname}`;
       color: var(--color-milk);
       padding: 1rem;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    ">
-      <div style="
+    "
+    >
+      <div
+        style="
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
         padding: 0 2rem;
-      ">
-        <div style="
+      "
+      >
+        <div
+          style="
           font-weight: 700;
           font-size: 1.5rem;
           letter-spacing: 0.1em;
-        ">
+        "
+        >
           <a href="/">Milkee</a>
         </div>
-        <nav style="
+        <nav
+          style="
           display: flex;
           gap: 1.5rem;
           font-weight: 500;
-        ">
+        "
+        >
           <a href="/docs" class="hover:text-milk-dark">Docs</a>
           <a href="/plugins" class="hover:text-milk-dark">Plugins</a>
-          <a href="https://www.npmjs.com/package/milkee" target="_blank" rel="noreferrer" class="hover:text-milk-dark">npm</a>
-          <a href="https://github.com/otoneko1102/coffeescript-milkee" target="_blank" rel="noreferrer" class="hover:text-milk-dark">GitHub</a>
+          <a
+            href="https://www.npmjs.com/package/milkee"
+            target="_blank"
+            rel="noreferrer"
+            class="hover:text-milk-dark">npm</a
+          >
+          <a
+            href="https://github.com/otoneko1102/coffeescript-milkee"
+            target="_blank"
+            rel="noreferrer"
+            class="hover:text-milk-dark">GitHub</a
+          >
         </nav>
       </div>
     </header>
@@ -96,14 +113,16 @@ const pageUrl = `${url}${Astro.url.pathname === '/' ? '' : Astro.url.pathname}`;
       <slot />
     </div>
 
-    <footer style="
+    <footer
+      style="
       background-color: var(--color-milk-cream);
       color: var(--color-coffee-light);
       padding: 2rem;
       text-align: center;
       margin-top: 3rem;
       border-top: 1px solid var(--color-milk-dark);
-    ">
+    "
+    >
       <p>
         &copy; {yearRange} Milkee Project by otoneko.
       </p>

@@ -7,7 +7,8 @@ interface Props {
 const { label, value } = Astro.props;
 ---
 
-<div style="
+<div
+  style="
   background-color: white;
   border: 1px solid var(--color-milk-dark);
   padding: 1rem;
@@ -16,22 +17,27 @@ const { label, value } = Astro.props;
   display: flex;
   flex-direction: column;
   align-items: center;
-">
-  <span style="
+"
+>
+  <span
+    style="
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--color-coffee-light);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.25rem;
-  ">
+  "
+  >
     {label}
   </span>
-  <span style="
+  <span
+    style="
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--color-coffee-dark);
-  ">
+  "
+  >
     {value}
   </span>
 </div>
