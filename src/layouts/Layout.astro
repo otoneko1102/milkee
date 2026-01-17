@@ -8,11 +8,13 @@ interface Props {
   url?: string;
 }
 
+import { SITE } from "../lib/site";
+
 const {
   title,
   description = "A delightful build tool for CoffeeScript. Simple, fast, and creamy smooth.",
-  image = "https://milkee.oto.im/img/milkee-logo.png",
-  url = "https://milkee.oto.im",
+  image = SITE.image,
+  url = SITE.url,
 } = Astro.props;
 
 const currentYear = new Date().getFullYear();
