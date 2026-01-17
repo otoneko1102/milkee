@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
+    "fetch-docs": "node ./scripts/fetch-docs.js",
+    "prebuild": "npm run fetch-docs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",

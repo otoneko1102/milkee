@@ -1,8 +1,10 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { marked } from "marked";
-// Import markdown content
-import docContent from "../content/docs.md?raw";
+import DocsSidebar from "../components/DocsSidebar.svelte";
+
+// No local doc content; will fetch documents dynamically from GitHub
+const docContent = "";
 
 type Heading = {
   level: number;
@@ -11,12 +13,44 @@ type Heading = {
 };
 
 const slugify = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+  const s = String(text).trim().toLowerCase();
+  try {
+    // Preserve Unicode letters and numbers (works for Japanese, etc.)
+    let base = s
+      .normalize("NFKD")
+      .replace(/[^^\p{L}\p{N}]+/gu, "-")
+      .replace(/(^-|-$)+/g, "");
+    if (!base) {
+      // Fallback to ASCII-safe slug if nothing remains
+      base =
+        s.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || "heading";
+    }
+    return base;
+  } catch (err) {
+    // Older runtimes might not support Unicode property escapes - fallback
+    return s.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || "heading";
+  }
+};
+// Small, deterministic hash to produce short ASCII ids from arbitrary text
+const hashString = (text: string): string => {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) {
+    h = (h << 5) + h + text.charCodeAt(i); // h * 33 + c
+    h = h >>> 0;
+  }
+  return h.toString(36).slice(-8);
 };
 
+// Create a stable ASCII id for headings: prefer slug (ASCII), otherwise fallback to hash-based id
+const createId = (text: string): string => {
+  const s = String(text).trim();
+  const base = slugify(s);
+  // If base contains non-ASCII characters, use a hash fallback to keep ids ASCII-friendly
+  if (/[^\x00-\x7f]/.test(base)) {
+    return `h-${hashString(s)}`;
+  }
+  return base;
+};
 const getHeadings = (content: string): Heading[] => {
   const regex = /^(#+)\s+(.*)$/gm;
   const headings: Heading[] = [];
@@ -27,298 +61,616 @@ const getHeadings = (content: string): Heading[] => {
     const text = match[2].trim();
     const id = slugify(text);
 
-    if (level >= 2 && level <= 3) {
+    if (level >= 1 && level <= 3) {
       headings.push({ text, level, id });
     }
   }
   return headings;
 };
 
-const headings = getHeadings(docContent);
-let htmlContent: string;
-try {
-  htmlContent = await marked.parse(docContent);
-} catch (err) {
-  // If marked throws (rare), log and retry with safe options
-  console.error("marked parse failed, retrying with safe options:", err);
-  htmlContent = await marked.parse(docContent, { gfm: true, breaks: true });
+// import fs from 'fs/promises'; // Not available in Astro environments
+
+// Helpers to map file paths to URL-safe page params and display names
+const fileToParam = (f: string): string => f.replace(/\//g, "_");
+const paramToFile = (p: string): string => p.replace(/_/g, "/");
+const displayName = (f: string): string => {
+  const base = f.replace(/^.*\//, "").replace(/\.md$/, "");
+  const isJa = /-ja$/i.test(base);
+  const name = base.replace(/-ja$/i, "").replace(/-/g, " ");
+  return isJa ? `${name} (日本語)` : name;
+};
+
+// Use import.meta.glob to import markdown files at build time
+const docImports = import.meta.glob("../content/**/*.md", {
+  as: "raw",
+  eager: true,
+});
+
+const repoBlobPrefix =
+  "https://github.com/otoneko1102/coffeescript-milkee/blob/main/";
+const repoRawPrefix =
+  "https://raw.githubusercontent.com/otoneko1102/coffeescript-milkee/main/";
+
+const docFiles = ["README.md", "README-ja.md", "PLUGIN.md", "PLUGIN-ja.md"];
+
+// Read fetched files from src/content at build time (populated by the prebuild fetch-docs script)
+const htmlMap: Record<string, string> = {};
+const headingsByFile: Record<string, Heading[]> = {};
+for (const f of docFiles) {
+  try {
+    const importKey = `../content/${f}`;
+    const md = (docImports as Record<string, string>)[importKey] ?? "";
+    if (!md) {
+      htmlMap[f] = "";
+      headingsByFile[f] = [];
+      continue;
+    }
+
+    // Convert relative images to raw URLs and relative links to either internal docs pages (preferred) or blob URLs
+    const transformed = md
+      .replace(
+        /!\[([^\]]*)\]\(\.\/([^\)]+)\)/g,
+        (_: string, alt: string, p: string) =>
+          `![${alt}](${repoRawPrefix}${p})`,
+      )
+      .replace(
+        /\[([^\]]*)\]\(\.\/([^\)]+)\)/g,
+        (_: string, text: string, p: string) => {
+          // p is like 'README-ja.md' or 'docs/PLUGIN.md' and may include a fragment like '#見出し'
+          const target = String(p);
+          const [filePart, hashPart] = target.split("#");
+          const normalized = filePart.startsWith("docs/")
+            ? filePart.slice(5)
+            : filePart;
+          if (docFiles.includes(normalized)) {
+            const param = fileToParam(normalized);
+            const fragment = hashPart
+              ? `#${createId(decodeURIComponent(hashPart))}`
+              : "";
+            return `[${text}](/docs/?page=${param}${fragment})`;
+          }
+          return `[${text}](${repoBlobPrefix}${p})`;
+        },
+      );
+
+    // generate HTML
+    const html = await marked.parse(transformed);
+
+    // Prepare reuse mapping for Japanese files: prefer English IDs when available (by level order)
+    const reuseIdsByLevel: Record<number, string[]> = { 1: [], 2: [], 3: [] };
+    if (f.endsWith("-ja.md")) {
+      const baseFile = f.replace(/-ja\.md$/, ".md");
+      if (headingsByFile[baseFile] && headingsByFile[baseFile].length) {
+        for (const h of headingsByFile[baseFile]) {
+          if (h.level >= 1 && h.level <= 3) reuseIdsByLevel[h.level].push(h.id);
+        }
+      }
+    }
+
+    // Inject ids into headings server-side, ensuring uniqueness per file and reusing English IDs for Japanese files
+    const used = new Map<string, number>();
+    let anonCounter = 0;
+    const counters: Record<number, number> = { 2: 0, 3: 0 };
+    const htmlWithIds = html.replace(
+      /<(h[1-3])([^>]*)>(.*?)<\/\1>/gms,
+      (m, tag, attrs, inner) => {
+        if (/\bid=/.test(attrs || "")) return m;
+        const level = parseInt(tag.slice(1), 10);
+        const text = String(inner)
+          .replace(/<[^>]+>/g, "")
+          .trim();
+        if (!text) return m;
+
+        // Try to reuse ID from the English counterpart if available for this level
+        let id: string | undefined;
+        const reuseArr = reuseIdsByLevel[level];
+        if (reuseArr && reuseArr.length && counters[level] < reuseArr.length) {
+          id = reuseArr[counters[level]];
+          counters[level]++;
+        }
+
+        // If no reused id, generate one
+        if (!id) {
+          let baseId = createId(text);
+          if (!baseId) {
+            anonCounter++;
+            baseId = `heading-${anonCounter}`;
+          }
+          id = baseId;
+        }
+
+        // Ensure uniqueness within this file
+        if (used.has(id)) {
+          const n = used.get(id)! + 1;
+          used.set(id, n);
+          id = `${id}-${n}`;
+        } else {
+          used.set(id, 1);
+        }
+
+        return `<${tag} id="${id}">${inner}</${tag}>`;
+      },
+    );
+
+    htmlMap[f] = htmlWithIds;
+
+    // Extract headings from the injected HTML (ensures ids are consistent)
+    const headingsList: Heading[] = [];
+    const headingRegex = /<(h[1-3])[^>]*id="([^"]+)"[^>]*>(.*?)<\/\1>/gms;
+    let hm;
+    while ((hm = headingRegex.exec(htmlWithIds)) !== null) {
+      const level = parseInt(hm[1].slice(1), 10);
+      const text = String(hm[3])
+        .replace(/<[^>]+>/g, "")
+        .trim();
+      const id = hm[2];
+      headingsList.push({ level, text, id });
+    }
+    headingsByFile[f] = headingsList;
+  } catch (err) {
+    // file missing or unreadable - leave mapping empty
+    htmlMap[f] = "";
+    headingsByFile[f] = [];
+  }
 }
 
+// Build nested TOC HTML from headings (server-side) — build a tree then render to valid nested <ul>/<li>
+const buildTOCHtml = (hs: Heading[]) => {
+  // Build tree
+  const root: { level: number; children: Heading[] } = {
+    level: 0,
+    children: [],
+  } as any;
+  const stack: Array<{ level: number; children: Heading[] }> = [root as any];
+  for (const h of hs) {
+    while (stack.length && stack[stack.length - 1].level >= h.level)
+      stack.pop();
+    const parent = stack[stack.length - 1];
+    const node = { ...h, children: [] } as any;
+    parent.children.push(node);
+    stack.push(node);
+  }
+
+  const indentForLevel = (level: number) => {
+    if (level === 1) return 0;
+    if (level === 2) return 1.0; // h2 slightly right
+    return 2.0; // h3 more right
+  };
+
+  const renderNodes = (nodes: any[]) => {
+    if (!nodes.length) return "";
+    let html = '<ul class="toc-list">';
+    for (const n of nodes) {
+      const indent = indentForLevel(n.level);
+      const style = `display:block;padding:0.125rem 0;padding-left:${indent}rem`;
+      html += `<li class="toc-item toc-level-${n.level}"><a href="#${n.id}" class="nav-h${n.level}" style="${style}">${n.text}</a>`;
+      if (n.children && n.children.length) html += renderNodes(n.children);
+      html += `</li>`;
+    }
+    html += "</ul>";
+    return html;
+  };
+
+  // Return rendered HTML for top-level nodes
+  return renderNodes(root.children);
+};
+
+const defaultFile = docFiles[0];
+let htmlContent: string =
+  htmlMap[defaultFile] ||
+  '<p style="color:var(--color-coffee-light);padding:2rem;text-align:center">No document available.</p>';
+const headings = headingsByFile[defaultFile] || [];
+const tocHtml = buildTOCHtml(headings);
+// Pre-serialize maps for safe inlining into client script
+const HTML_MAP_JSON = JSON.stringify(htmlMap).replace(/</g, "\\u003c");
+const HEADINGS_JSON = JSON.stringify(headingsByFile).replace(/</g, "\\u003c");
+
 // Inject ids into server-rendered headings to avoid client-side mutation/layout shift
-htmlContent = htmlContent.replace(/<(h[23])([^>]*)>(.*?)<\/\1>/gms, (m, tag, attrs, inner) => {
-  if (/\bid=/.test(attrs || '')) return m;
-  const text = String(inner).replace(/<[^>]+>/g, '').trim();
-  if (!text) return m;
-  const id = slugify(text);
-  return `<${tag} id="${id}">${inner}</${tag}>`;
-});
+htmlContent = htmlContent.replace(
+  /<(h[1-3])([^>]*)>(.*?)<\/\1>/gms,
+  (m, tag, attrs, inner) => {
+    if (/\bid=/.test(attrs || "")) return m;
+    const text = String(inner)
+      .replace(/<[^>]+>/g, "")
+      .trim();
+    if (!text) return m;
+    const id = slugify(text);
+    return `<${tag} id="${id}">${inner}</${tag}>`;
+  },
+);
 ---
 
 <Layout title="Docs">
   <div class="docs-container">
     <main class="docs-main">
-        <article class="docs-content" set:html={htmlContent} />
-      </main>
+      <!-- Mobile: button to open table of contents (select moved to sidebar) -->
+      <div
+        class="mobile-toc-bar"
+        style="display:none;align-items:center;gap:0.5rem;margin-bottom:1rem;"
+      >
+        <button id="mobile-toc-open" class="btn-primary" aria-expanded="false"
+          >☰ On this page</button
+        >
+      </div>
+      <article class="docs-content" set:html={htmlContent} />
+
+      <!-- Server-rendered store of all docs (hidden) -->
+      <div class="docs-store" style="display:none" aria-hidden="true">
+        {docFiles.map((f) => (
+          // Use raw HTML from the prebuilt map so client can query `[data-doc]` elements
+          <div data-doc={f} set:html={htmlMap[f]}></div>
+        ))}
+      </div>
+    </main>
     <aside class="docs-sidebar">
       <div class="sidebar-sticky">
-        <h4 class="sidebar-title">
-          <span>☕</span> On this page
-        </h4>
-        <nav class="sidebar-nav">
-          {
-            headings.map((heading) => (
-              <a
-                href={`#${heading.id}`}
-                class={heading.level === 2 ? "nav-h2" : "nav-h3"}
-              >
-                {heading.text}
-              </a>
-            ))
-          }
-        </nav>
+        <DocsSidebar client:load docFiles={docFiles} defaultFile={defaultFile} />
       </div>
     </aside>
   </div>
-</Layout>
 
-<style>
-  .docs-container {
-    max-width: 80rem;
-    margin: 0 auto;
-    padding: 1.5rem;
-    display: flex;
-    gap: 3rem;
-    min-height: 100vh;
-  }
 
-  .docs-main {
-    flex: 1;
-    min-width: 0;
-  }
+  <style>
+    .docs-container {
+      max-width: 80rem;
+      margin: 0 auto;
+      padding: 1.5rem;
+      display: flex;
+      gap: 3rem;
+      min-height: 100vh;
+    }
 
-  .docs-sidebar {
-    width: 250px;
-    flex-shrink: 0;
-  }
+    .docs-main {
+      flex: 1;
+      min-width: 0;
+    }
 
-  .sidebar-sticky {
-    position: sticky;
-    top: 100px;
-  }
-
-  .sidebar-title {
-    font-weight: 700;
-    color: var(--color-coffee-dark);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    border-bottom: 1px solid var(--color-milk-dark);
-    padding-bottom: 0.5rem;
-  }
-
-  .sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    max-height: calc(100vh - 150px);
-    overflow-y: auto;
-  }
-
-  .nav-h2 {
-    color: var(--color-coffee);
-    font-weight: 700;
-    font-size: 0.875rem;
-    text-decoration: none;
-  }
-
-  .nav-h3 {
-    color: var(--color-coffee-light);
-    font-weight: 400;
-    font-size: 0.875rem;
-    padding-left: 1rem;
-    text-decoration: none;
-  }
-
-  .nav-h2:hover,
-  .nav-h3:hover {
-    color: var(--color-coffee-dark);
-  }
-
-  @media (max-width: 1024px) {
     .docs-sidebar {
+      width: 250px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-sticky {
+      position: sticky;
+      top: 100px;
+      /* Keep the sidebar within the viewport and allow it to scroll internally */
+      max-height: calc(100vh - 120px);
+      overflow: auto;
+      padding-right: 0.5rem; /* small gap to avoid clipping */
+    }
+
+    .sidebar-title {
+      font-weight: 700;
+      color: var(--color-coffee-dark);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--color-milk-dark);
+      padding-bottom: 0.5rem;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+    }
+
+    .nav-h1 {
+      color: var(--color-coffee-dark);
+      font-weight: 900;
+      font-size: 1rem;
+      text-decoration: none;
+    }
+
+    .sidebar-nav .toc-list {
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+    }
+
+    /* Use per-level padding on items to create clear, consistent indentation */
+    .sidebar-nav .toc-item {
+      margin: 0.25rem 0;
+    }
+
+    /* Make anchors block-level so padding applies visibly (kept for fallback)
+       Primary indentation is applied inline in the generated TOC HTML to ensure
+       it's enforced even if external CSS is tweaked. */
+    .sidebar-nav .toc-list {
+      list-style: none !important;
+      margin: 0;
+      padding-left: 0 !important;
+    }
+    .sidebar-nav .toc-list .toc-list {
+      margin-left: 0.9rem;
+      padding-left: 0;
+      list-style: none !important;
+    }
+    .sidebar-nav .toc-list .toc-list .toc-list {
+      margin-left: 1.8rem;
+      padding-left: 0;
+      list-style: none !important;
+    }
+
+    /* Ensure list markers are suppressed across clients */
+    .sidebar-nav .toc-list li {
+      list-style: none !important;
+    }
+    .sidebar-nav .toc-list li::marker {
+      content: none;
+    }
+    .sidebar-nav .toc-list li *::marker {
+      content: none;
+    }
+
+    .sidebar-nav .toc-item,
+    .sidebar-nav .toc-item * {
+      list-style: none !important;
+    }
+
+    .sidebar-nav .toc-item a {
+      display: block;
+      padding: 0.125rem 0;
+    }
+
+    /* Per-level padding on the LI to ensure indentation even if inline styles are stripped */
+    .toc-item.toc-level-1 {
+      padding-left: 0;
+    }
+    .toc-item.toc-level-2 {
+      padding-left: 0.75rem;
+    }
+    .toc-item.toc-level-3 {
+      padding-left: 1.5rem;
+    }
+
+    /* Style for the page select in sidebar */
+    .sidebar-select {
+      display: block;
+      width: 100%;
+      padding: 0.45rem 0.7rem;
+      border: 1px solid var(--color-milk-dark);
+      border-radius: 0.375rem;
+      background: white;
+      color: var(--color-coffee);
+      font-weight: 700;
+      box-shadow: none;
+    }
+
+    .sidebar-select:focus {
+      outline: 2px solid rgba(37, 99, 235, 0.12);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.06);
+    }
+
+    /* Mobile TOC open button */
+    .mobile-toc-bar button#mobile-toc-open {
+      padding: 0.45rem 0.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid var(--color-milk-dark);
+      background: white;
+      color: var(--color-coffee);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+
+
+    /* Sidebar controls */
+    .sidebar-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .sidebar-close {
+      display: none;
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      color: var(--color-coffee);
+    }
+
+    /* Mobile behavior */
+    .mobile-toc-bar {
       display: none;
     }
-  }
+    @media (max-width: 1024px) {
+      .mobile-toc-bar {
+        display: flex;
+      }
+      .docs-sidebar {
+        display: none;
+      }
+      .docs-sidebar.toc-open {
+        display: block;
+        position: fixed;
+        top: 70px;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: var(--color-milk);
+        z-index: 1000;
+        padding: 1rem;
+        overflow-y: auto;
+        width: 100%;
+        max-width: 420px;
+        margin-left: auto;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+      }
+      .sidebar-close {
+        display: inline-block;
+      }
+    }
 
-  /* Markdown content styles */
-  .docs-content :global(h1) {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: var(--color-coffee-dark);
-    margin: 1.5rem 0;
-    border-bottom: 2px solid var(--color-milk-dark);
-    padding-bottom: 1rem;
-    scroll-margin-top: 100px;
-  }
+    /* Markdown content styles */
+    .docs-content :global(h1) {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--color-coffee-dark);
+      margin: 1.5rem 0;
+      border-bottom: 2px solid var(--color-milk-dark);
+      padding-bottom: 1rem;
+      scroll-margin-top: 100px;
+    }
 
-  .docs-content :global(h2) {
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: var(--color-coffee-dark);
-    margin: 2rem 0 1rem;
-    scroll-margin-top: 100px;
-  }
+    .docs-content :global(h2) {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--color-coffee-dark);
+      margin: 2rem 0 1rem;
+      scroll-margin-top: 100px;
+    }
 
-  .docs-content :global(h3) {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--color-coffee);
-    margin: 1.5rem 0 1rem;
-    scroll-margin-top: 100px;
-  }
+    .docs-content :global(h3) {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-coffee);
+      margin: 1.5rem 0 1rem;
+      scroll-margin-top: 100px;
+    }
 
-  .docs-content :global(h4) {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-coffee-dark);
-    margin: 1rem 0 0.75rem;
-  }
+    .docs-content :global(h4) {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-coffee-dark);
+      margin: 1rem 0 0.75rem;
+    }
 
-  .docs-content :global(h5) {
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: var(--color-coffee);
-    margin: 1rem 0 0.5rem;
-  }
+    .docs-content :global(h5) {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--color-coffee);
+      margin: 1rem 0 0.5rem;
+    }
 
-  .docs-content :global(p) {
-    margin-bottom: 1rem;
-    color: var(--color-coffee);
-    line-height: 1.8;
-  }
+    .docs-content :global(p) {
+      margin-bottom: 1rem;
+      color: var(--color-coffee);
+      line-height: 1.8;
+    }
 
-  .docs-content :global(code) {
-    background-color: var(--color-milk-cream);
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.25rem;
-    font-family: "Monaco", "Courier New", monospace;
-    font-size: 0.875rem;
-    border: 1px solid var(--color-milk-dark);
-    color: var(--color-coffee-dark);
-  }
+    .docs-content :global(code) {
+      background-color: var(--color-milk-cream);
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-family: "Monaco", "Courier New", monospace;
+      font-size: 0.875rem;
+      border: 1px solid var(--color-milk-dark);
+      color: var(--color-coffee-dark);
+    }
 
-  .docs-content :global(pre) {
-    background-color: var(--color-coffee-dark);
-    color: var(--color-milk);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    font-family: "Monaco", "Courier New", monospace;
-    font-size: 0.875rem;
-    overflow-x: auto;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-    margin: 1.5rem 0;
-    border: 1px solid var(--color-coffee);
-  }
+    .docs-content :global(pre) {
+      background-color: var(--color-coffee-dark);
+      color: var(--color-milk);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      font-family: "Monaco", "Courier New", monospace;
+      font-size: 0.875rem;
+      overflow-x: auto;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+      margin: 1.5rem 0;
+      border: 1px solid var(--color-coffee);
+    }
 
-  .docs-content :global(pre code) {
-    background: none;
-    padding: 0;
-    border: none;
-    color: inherit;
-    font-size: inherit;
-  }
+    .docs-content :global(pre code) {
+      background: none;
+      padding: 0;
+      border: none;
+      color: inherit;
+      font-size: inherit;
+    }
 
-  .docs-content :global(a) {
-    color: #2563eb;
-    font-weight: 500;
-    text-decoration: underline;
-  }
+    .docs-content :global(a) {
+      color: #2563eb;
+      font-weight: 500;
+      text-decoration: underline;
+    }
 
-  .docs-content :global(a:hover) {
-    color: #1d4ed8;
-  }
+    .docs-content :global(a:hover) {
+      color: #1d4ed8;
+    }
 
-  .docs-content :global(blockquote) {
-    border-left: 4px solid var(--color-coffee);
-    margin: 1rem 0;
-    color: var(--color-coffee-light);
-    background-color: var(--color-milk-cream);
-    padding: 1rem;
-    border-radius: 0 0.25rem 0.25rem 0;
-  }
+    .docs-content :global(blockquote) {
+      border-left: 4px solid var(--color-coffee);
+      margin: 1rem 0;
+      color: var(--color-coffee-light);
+      background-color: var(--color-milk-cream);
+      padding: 1rem;
+      border-radius: 0 0.25rem 0.25rem 0;
+    }
 
-  .docs-content :global(blockquote p) {
-    margin: 0;
-  }
+    .docs-content :global(blockquote p) {
+      margin: 0;
+    }
 
-  .docs-content :global(ul),
-  .docs-content :global(ol) {
-    margin-bottom: 1rem;
-    margin-left: 1.5rem;
-  }
+    .docs-content :global(ul),
+    .docs-content :global(ol) {
+      margin-bottom: 1rem;
+      margin-left: 1.5rem;
+    }
 
-  .docs-content :global(ul) {
-    list-style: disc;
-  }
+    .docs-content :global(ul) {
+      list-style: disc;
+    }
 
-  .docs-content :global(ol) {
-    list-style: decimal;
-  }
+    .docs-content :global(ol) {
+      list-style: decimal;
+    }
 
-  .docs-content :global(li) {
-    margin-bottom: 0.5rem;
-    color: var(--color-coffee);
-  }
+    .docs-content :global(li) {
+      margin-bottom: 0.5rem;
+      color: var(--color-coffee);
+    }
 
-  .docs-content :global(table) {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.5rem 0;
-    border: 1px solid var(--color-milk-dark);
-    border-radius: 0.5rem;
-    overflow: hidden;
-  }
+    .docs-content :global(table) {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      border: 1px solid var(--color-milk-dark);
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
 
-  .docs-content :global(thead) {
-    background-color: var(--color-coffee);
-    color: var(--color-milk);
-  }
+    .docs-content :global(thead) {
+      background-color: var(--color-coffee);
+      color: var(--color-milk);
+    }
 
-  .docs-content :global(th),
-  .docs-content :global(td) {
-    padding: 0.75rem;
-    text-align: left;
-    border: 1px solid var(--color-milk-dark);
-  }
+    .docs-content :global(th),
+    .docs-content :global(td) {
+      padding: 0.75rem;
+      text-align: left;
+      border: 1px solid var(--color-milk-dark);
+    }
 
-  .docs-content :global(tbody tr:nth-child(even)) {
-    background-color: var(--color-milk-cream);
-  }
+    .docs-content :global(tbody tr:nth-child(even)) {
+      background-color: var(--color-milk-cream);
+    }
 
-  .docs-content :global(tbody tr:hover) {
-    background-color: var(--color-milk-dark);
-  }
+    .docs-content :global(img) {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+      margin: 1rem 0;
+    }
 
-  .docs-content :global(img) {
-    max-width: 100%;
-    height: auto;
-    border-radius: 0.5rem;
-    margin: 1rem 0;
-  }
+    .docs-content :global(hr) {
+      border: none;
+      border-top: 1px solid var(--color-milk-dark);
+      margin: 2rem 0;
+    }
 
-  .docs-content :global(hr) {
-    border: none;
-    border-top: 1px solid var(--color-milk-dark);
-    margin: 2rem 0;
-  }
+    .docs-content :global(strong) {
+      font-weight: 700;
+      color: var(--color-coffee-dark);
+    }
 
-  .docs-content :global(strong) {
-    font-weight: 700;
-    color: var(--color-coffee-dark);
-  }
-
-  .docs-content :global(em) {
-    font-style: italic;
-  }
-</style>
+    .docs-content :global(em) {
+      font-style: italic;
+    }
+  </style>
+</Layout>
