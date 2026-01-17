@@ -1,7 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { marked } from "marked";
-
 // Import markdown content
 import docContent from "../content/docs.md?raw";
 
@@ -44,30 +43,22 @@ try {
   console.error("marked parse failed, retrying with safe options:", err);
   htmlContent = await marked.parse(docContent, { gfm: true, breaks: true });
 }
+
+// Inject ids into server-rendered headings to avoid client-side mutation/layout shift
+htmlContent = htmlContent.replace(/<(h[23])([^>]*)>(.*?)<\/\1>/gms, (m, tag, attrs, inner) => {
+  if (/\bid=/.test(attrs || '')) return m;
+  const text = String(inner).replace(/<[^>]+>/g, '').trim();
+  if (!text) return m;
+  const id = slugify(text);
+  return `<${tag} id="${id}">${inner}</${tag}>`;
+});
 ---
 
 <Layout title="Docs">
   <div class="docs-container">
     <main class="docs-main">
-      <article class="docs-content" set:html={htmlContent} />
-      <script is:inline>
-        (function () {
-          const slugify = (text) =>
-            text
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, "-")
-              .replace(/(^-|-$)+/g, "");
-          const content = document.querySelector(".docs-content");
-          if (!content) return;
-          ["h2", "h3"].forEach((tag) => {
-            content.querySelectorAll(tag).forEach((h) => {
-              if (!h.id) h.id = slugify(h.textContent || h.innerText || "");
-            });
-          });
-        })();
-      </script>
-    </main>
-
+        <article class="docs-content" set:html={htmlContent} />
+      </main>
     <aside class="docs-sidebar">
       <div class="sidebar-sticky">
         <h4 class="sidebar-title">

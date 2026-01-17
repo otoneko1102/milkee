@@ -2,12 +2,14 @@
 interface Props {
   label: string;
   value: string;
+  id?: string;
 }
 
-const { label, value } = Astro.props;
+const { label, value, id } = Astro.props;
 ---
 
 <div
+  id={id}
   style="
   background-color: white;
   border: 1px solid var(--color-milk-dark);

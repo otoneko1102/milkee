@@ -1,32 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import InstallBox from "../components/InstallBox.astro";
-import StatsCard from "../components/StatsCard.astro";
+import InstallBox from "../components/InstallBox.svelte";
+import MilkeeStats from "../components/MilkeeStats.svelte";
 
-async function getMilkeeStats() {
-  try {
-    const [registryRes, downloadsRes] = await Promise.all([
-      fetch("https://registry.npmjs.org/milkee"),
-      fetch("https://api.npmjs.org/downloads/point/last-month/milkee"),
-    ]);
+// Runtime-only fetching: remove build-time network request so values are not baked into the build.
+// The client script will fetch and populate the actual values when the page loads.
 
-    if (!registryRes.ok || !downloadsRes.ok) throw new Error("Failed to fetch");
-
-    const registry = await registryRes.json();
-    const downloads = await downloadsRes.json();
-
-    return {
-      version: registry["dist-tags"].latest,
-      lastUpdated: new Date(registry.time.modified).toLocaleDateString("ja-JP"),
-      downloads: downloads.downloads.toLocaleString(),
-    };
-  } catch (error) {
-    console.error(error);
-    return { version: "0.0.1", lastUpdated: "-", downloads: "0" };
-  }
-}
-
-const stats = await getMilkeeStats();
+const stats = { version: "-", lastUpdated: "-", downloads: "-" };
 ---
 
 <Layout title="Home">
@@ -125,22 +105,9 @@ const stats = await getMilkeeStats();
       Simple, fast, and creamy smooth.
     </p>
 
-    <div
-      style="
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      width: 100%;
-      max-width: 42rem;
-      margin-bottom: 2.5rem;
-    "
-    >
-      <StatsCard label="Latest Version" value={`v${stats.version}`} />
-      <StatsCard label="Monthly Downloads" value={stats.downloads} />
-      <StatsCard label="Last Updated" value={stats.lastUpdated} />
-    </div>
+    <MilkeeStats client:load />
 
-    <InstallBox />
+    <InstallBox client:load />
 
     <div
       style="
@@ -150,60 +117,8 @@ const stats = await getMilkeeStats();
       justify-content: center;
     "
     >
-      <a
-        href="/docs"
-        style="
-          padding: 0.75rem 2rem;
-          background-color: var(--color-coffee);
-          color: var(--color-milk);
-          font-weight: 700;
-          border-radius: 9999px;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-          transition: all 0.3s ease;
-          display: inline-block;
-        "
-        onmouseover="this.style.backgroundColor='var(--color-coffee-light)'; this.style.boxShadow='0 20px 25px -5px rgba(0, 0, 0, 0.2)'; this.style.transform='translateY(-2px)'"
-        onmouseout="this.style.backgroundColor='var(--color-coffee)'; this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1)'; this.style.transform='translateY(0)'"
-      >
-        Get Started
-      </a>
-      <a
-        href="/plugins"
-        style="
-          padding: 0.75rem 2rem;
-          background-color: white;
-          color: var(--color-coffee);
-          border: 2px solid var(--color-coffee);
-          font-weight: 700;
-          border-radius: 9999px;
-          transition: all 0.3s ease;
-          display: inline-block;
-        "
-        onmouseover="this.style.backgroundColor='var(--color-milk-cream)'"
-        onmouseout="this.style.backgroundColor='white'"
-      >
-        Find Plugins
-      </a>
-    </div>
-
-    <div style="margin-top: 2rem;">
-      <a
-        href="https://www.npmjs.com/package/milkee"
-        target="_blank"
-        rel="noreferrer"
-        style="
-          color: var(--color-coffee-light);
-          font-size: 0.875rem;
-          display: flex;
-          align-items: center;
-          gap: 0.25rem;
-          transition: color 0.3s ease;
-        "
-        onmouseover="this.style.color='var(--color-coffee)'; this.style.textDecoration='underline'"
-        onmouseout="this.style.color='var(--color-coffee-light)'; this.style.textDecoration='none'"
-      >
-        View on npm registry →
-      </a>
+      <a href="/docs" class="btn-primary"> Get Started </a>
+      <a href="/plugins" class="btn-secondary"> Find Plugins </a>
     </div>
   </main>
 </Layout>

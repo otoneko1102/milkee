@@ -77,6 +77,47 @@ button {
   cursor: pointer;
 }
 
+/* Button Styles */
+.btn-primary {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background-color: var(--color-coffee);
+  color: var(--color-milk);
+  font-weight: 700;
+  border-radius: 9999px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-coffee-light);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background-color: white;
+  color: var(--color-coffee);
+  font-weight: 700;
+  border-radius: 9999px;
+  border: 2px solid var(--color-coffee);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-milk-cream);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
 /* Layout utilities */
 .container {
   max-width: 1200px;

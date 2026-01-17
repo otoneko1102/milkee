@@ -62,7 +62,7 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
       z-index: 50;
       background-color: var(--color-coffee-dark);
       color: var(--color-milk);
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     "
     >
@@ -72,14 +72,14 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        padding: 0 2rem;
+        padding: 0 1rem;
       "
       >
         <div
           style="
           font-weight: 700;
-          font-size: 1.5rem;
-          letter-spacing: 0.1em;
+          font-size: 1.25rem;
+          letter-spacing: 0.05em;
         "
         >
           <a href="/">Milkee</a>
@@ -87,8 +87,9 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
         <nav
           style="
           display: flex;
-          gap: 1.5rem;
+          gap: 0.75rem;
           font-weight: 500;
+          font-size: 0.875rem;
         "
         >
           <a href="/docs" class="hover:text-milk-dark">Docs</a>
@@ -109,7 +110,7 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
       </div>
     </header>
 
-    <div style="min-height: 100vh; padding-top: 80px;">
+    <div style="min-height: 100vh; padding-top: 70px;">
       <slot />
     </div>
 
@@ -133,6 +134,21 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
         color: inherit;
         text-decoration: none;
         transition: color 0.2s ease;
+      }
+
+      @media (min-width: 768px) {
+        header > div {
+          padding: 0 2rem !important;
+        }
+
+        header nav {
+          gap: 1.5rem !important;
+          font-size: 1rem !important;
+        }
+
+        header > div > div {
+          font-size: 1.5rem !important;
+        }
       }
     </style>
   </body>
