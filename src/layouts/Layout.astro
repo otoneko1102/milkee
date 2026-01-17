@@ -23,7 +23,7 @@ const startYear = 2025;
 const yearRange =
   startYear === currentYear ? startYear : `${startYear} - ${currentYear}`;
 
-const pageTitle = `${title} | Milkee`;
+const pageTitle = title === "Home" ? "Milkee" : `${title} | Milkee`;
 const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
 ---
 
