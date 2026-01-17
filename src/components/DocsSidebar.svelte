@@ -268,6 +268,7 @@
 </script>
 
 <div>
+  <div class="sidebar-whitespace" style="height: 4rem"></div>
   <div class="sidebar-controls">
     <select id="doc-source" class="sidebar-select" aria-label="Select doc page">
       {#each docFiles as f}
