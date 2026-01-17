@@ -124,10 +124,7 @@ for (const f of docFiles) {
             : filePart;
           if (docFiles.includes(normalized)) {
             const param = fileToParam(normalized);
-            const fragment = hashPart
-              ? `#${createId(decodeURIComponent(hashPart))}`
-              : "";
-            return `[${text}](/docs/?page=${param}${fragment})`;
+            return `[${text}](/docs/?page=${param})`;
           }
           return `[${text}](${repoBlobPrefix}${p})`;
         },
@@ -289,7 +286,8 @@ htmlContent = htmlContent.replace(
           id="mobile-toc-open"
           class="btn-primary"
           aria-expanded="false"
-          aria-label="Open table of contents">☰</button
+          aria-label="Open table of contents"
+          ><span class="material-icons" aria-hidden="true">menu</span></button
         >
       </div>
       <article class="docs-content" set:html={htmlContent} />

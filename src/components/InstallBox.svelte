@@ -48,13 +48,22 @@
             </div>
             <button
               on:click={() => copyCmd(item.cmd, item.id)}
-              class="btn-secondary"
-              style="font-size:0.75rem;"
+              class="btn-secondary copy-btn"
+              aria-label="Copy command"
+              title="Copy to clipboard"
             >
               {#if copiedId === item.id}
-                <span style="color:#4ade80;">✓</span> Copied
+                <span
+                  aria-hidden="true"
+                  class="material-icons"
+                  style="color:#4ade80;">check</span
+                >
+                <span class="sr-only">Copied</span>
               {:else}
-                <span>📋</span> Copy
+                <span aria-hidden="true" class="material-icons"
+                  >content_copy</span
+                >
+                <span class="sr-only">Copy</span>
               {/if}
             </button>
           </div>
@@ -63,3 +72,29 @@
     </div>
   </div>
 </div>
+
+<style>
+  .copy-btn {
+    padding: 0.25rem 0.4rem;
+    font-size: 1rem; /* keep emoji large enough to see */
+    line-height: 1;
+    min-width: 2.2rem;
+    border-radius: 0.375rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* visually hidden for screen readers */
+  .sr-only {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

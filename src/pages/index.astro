@@ -120,5 +120,25 @@ const stats = { version: "-", lastUpdated: "-", downloads: "-" };
       <a href="/docs" class="btn-primary"> Get Started </a>
       <a href="/plugins" class="btn-secondary"> Find Plugins </a>
     </div>
+
+    <div style="margin-top: 2rem;">
+      <a
+        href="https://www.npmjs.com/package/milkee"
+        target="_blank"
+        rel="noreferrer"
+        style="
+          color: var(--color-coffee-light);
+          font-size: 0.875rem;
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          transition: color 0.3s ease;
+        "
+        onmouseover="this.style.color='var(--color-coffee)'; this.style.textDecoration='underline'"
+        onmouseout="this.style.color='var(--color-coffee-light)'; this.style.textDecoration='none'"
+      >
+        View on npm registry →
+      </a>
+    </div>
   </main>
 </Layout>

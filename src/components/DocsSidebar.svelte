@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from "svelte";
   export let docFiles: string[] = [];
+  // svelte-ignore export_let_unused
   export let defaultFile: string = "";
 
   // Optional helper to format filenames for display; parent can pass its own implementation
@@ -69,6 +70,8 @@
   function setPageParam(param: string) {
     const url = new URL(window.location.href);
     url.searchParams.set("page", param);
+    // Ensure hash is cleared when changing pages
+    url.hash = "";
     history.replaceState(null, "", url.toString());
   }
 
@@ -152,6 +155,11 @@
     if (select) {
       if (q && Array.from(select.options).some((o) => o.value === q))
         select.value = q;
+      else {
+        const df = defaultFile || select.value;
+        setPageParam(df);
+        select.value = df;
+      }
       renderFromMap(select.value);
       select.addEventListener("change", (e) => {
         const val = (e.target as HTMLSelectElement).value;
@@ -253,7 +261,7 @@
                   history.replaceState(
                     null,
                     "",
-                    `${location.pathname}?page=${param}#${alt2}`,
+                    `${location.pathname}?page=${param}`,
                   );
               }
               if (el2) el2.scrollIntoView({ behavior: "smooth" });
@@ -278,7 +286,8 @@
     <button
       id="mobile-toc-close"
       class="sidebar-close"
-      aria-label="Close table of contents">✕</button
+      aria-label="Close table of contents"
+      ><span class="material-icons" aria-hidden="true">close</span></button
     >
   </div>
   <h4 class="sidebar-title"><span>☕</span> On this page</h4>

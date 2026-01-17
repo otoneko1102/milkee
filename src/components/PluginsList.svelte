@@ -204,8 +204,17 @@
             <div
               style="display:flex;flex-wrap:wrap;gap:0.5rem;font-size:0.875rem;color:var(--color-coffee-light);"
             >
-              <span>👤 {pkg.package.publisher.username}</span>
-              <span>📅 {new Date(pkg.package.date).toLocaleDateString()}</span>
+              <span style="display:flex;align-items:center;gap:0.25rem;"
+                ><span class="material-icons small" aria-hidden="true"
+                  >person</span
+                ><span>{pkg.package.publisher.username}</span></span
+              >
+              <span style="display:flex;align-items:center;gap:0.25rem;"
+                ><span class="material-icons small" aria-hidden="true"
+                  >calendar_today</span
+                ><span>{new Date(pkg.package.date).toLocaleDateString()}</span
+                ></span
+              >
             </div>
           </div>
         </div>

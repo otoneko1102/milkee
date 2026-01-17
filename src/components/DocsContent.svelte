@@ -48,6 +48,8 @@
   function setPageParam(param: string) {
     const url = new URL(window.location.href);
     url.searchParams.set("page", param);
+    // Ensure hash is cleared when changing pages
+    url.hash = "";
     history.replaceState(null, "", url.toString());
   }
 
@@ -179,13 +181,13 @@
               history.replaceState(
                 null,
                 "",
-                `${location.pathname}?page=${(document.getElementById("doc-source") as HTMLSelectElement | null)?.value}#${alt}`,
+                `${location.pathname}?page=${(document.getElementById("doc-source") as HTMLSelectElement | null)?.value}`,
               );
           } else {
             history.replaceState(
               null,
               "",
-              `${location.pathname}?page=${(document.getElementById("doc-source") as HTMLSelectElement | null)?.value}#${raw}`,
+              `${location.pathname}?page=${(document.getElementById("doc-source") as HTMLSelectElement | null)?.value}`,
             );
           }
           if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -211,7 +213,7 @@
                   history.replaceState(
                     null,
                     "",
-                    `${location.pathname}?page=${param}#${alt2}`,
+                    `${location.pathname}?page=${param}`,
                   );
               }
               if (el2) el2.scrollIntoView({ behavior: "smooth" });
