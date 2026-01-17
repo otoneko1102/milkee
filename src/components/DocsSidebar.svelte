@@ -180,6 +180,23 @@
           mobileOpen.setAttribute("aria-expanded", "false");
       });
     }
+
+    // Close when clicking the overlay (outside the drawer)
+    if (sidebarEl) {
+      sidebarEl.addEventListener("click", (e) => {
+        const drawerContent = sidebarEl.querySelector(".sidebar-sticky");
+        // If click is on overlay but not on drawer content, close it
+        if (
+          e.target === sidebarEl ||
+          (drawerContent && !drawerContent.contains(e.target as Node))
+        ) {
+          sidebarEl.classList.remove("toc-open");
+          if (mobileOpen instanceof HTMLElement)
+            mobileOpen.setAttribute("aria-expanded", "false");
+        }
+      });
+    }
+
     // Close with Escape key when open
     document.addEventListener("keydown", (ev) => {
       if (ev.key === "Escape" && sidebarEl?.classList.contains("toc-open")) {
@@ -279,6 +296,9 @@
     width: 100%;
     padding: 0.45rem 0.7rem;
     border-radius: 0.375rem;
+  }
+  .sidebar-close {
+    display: none; /* Hidden by default */
   }
   :global(.toc-list) {
     list-style: none;

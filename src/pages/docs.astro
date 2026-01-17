@@ -516,27 +516,32 @@ htmlContent = htmlContent.replace(
       .docs-sidebar {
         display: block;
         position: fixed;
-        inset: 0;
+        inset: 0; /* Cover entire screen including header */
+        width: 100vw;
+        height: 100vh;
         background: rgba(0, 0, 0, 0);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 200ms ease;
+        transition:
+          opacity 200ms ease,
+          background 200ms ease;
         z-index: 1000;
       }
       .docs-sidebar.toc-open {
-        background: rgba(0, 0, 0, 0.24);
+        background: rgba(0, 0, 0, 0.4); /* Darker overlay */
         opacity: 1;
         pointer-events: auto;
       }
 
-      /* Drawer panel anchored at right edge */
+      /* Drawer panel anchored at right edge, below header */
       .docs-sidebar .sidebar-sticky {
         position: absolute;
         right: 0;
-        top: 0;
+        left: auto;
+        top: 70px; /* Start below header */
         bottom: 0;
         width: 100%;
-        max-width: 420px;
+        max-width: 320px;
         background: var(--color-milk);
         box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
         margin: 0;
@@ -549,12 +554,16 @@ htmlContent = htmlContent.replace(
         transform: translateX(0);
       }
 
-      /* Close button in the top-right corner of the drawer */
+      /* Close button in the top-right corner of the drawer - only show when drawer is open */
+      .sidebar-close {
+        display: none;
+      }
       .docs-sidebar.toc-open .sidebar-close {
         display: inline-block;
         position: absolute;
         top: 12px;
         right: 12px;
+        z-index: 10;
       }
     }
 
