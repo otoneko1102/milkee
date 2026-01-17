@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { onMount, createEventDispatcher } from 'svelte';
+  import { onMount, createEventDispatcher } from "svelte";
   export let docFiles: string[] = [];
-  export let defaultFile: string = '';
+  export let defaultFile: string = "";
 
   // Optional helper to format filenames for display; parent can pass its own implementation
   // Renamed to `formatDisplayName` to avoid collision with Svelte runtime helper
   export let formatDisplayName: (f: string) => string = (f: string) => {
-    const base = f.replace(/^.*\//, '').replace(/\.md$/, '');
+    const base = f.replace(/^.*\//, "").replace(/\.md$/, "");
     const isJa = /-ja$/i.test(base);
-    const name = base.replace(/-ja$/i, '').replace(/-/g, ' ');
+    const name = base.replace(/-ja$/i, "").replace(/-/g, " ");
     return isJa ? `${name} (日本語)` : name;
   };
 
@@ -17,13 +17,13 @@
   // fall back to our own formatter logic.
   function labelFor(f: string) {
     try {
-      if (typeof formatDisplayName === 'function') return formatDisplayName(f);
+      if (typeof formatDisplayName === "function") return formatDisplayName(f);
     } catch (e) {
       // ignore and fall through
     }
-    const base = f.replace(/^.*\//, '').replace(/\.md$/, '');
+    const base = f.replace(/^.*\//, "").replace(/\.md$/, "");
     const isJa = /-ja$/i.test(base);
-    const name = base.replace(/-ja$/i, '').replace(/-/g, ' ');
+    const name = base.replace(/-ja$/i, "").replace(/-/g, " ");
     return isJa ? `${name} (日本語)` : name;
   }
 
@@ -32,18 +32,25 @@
   const slugify = (text: string) => {
     const s = String(text).trim().toLowerCase();
     try {
-      let base = s.normalize('NFKD').replace(/[^^\p{L}\p{N}]+/gu, '-').replace(/(^-|-$)+/g, '');
-      if (!base) base = s.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || 'heading';
+      let base = s
+        .normalize("NFKD")
+        .replace(/[^^\p{L}\p{N}]+/gu, "-")
+        .replace(/(^-|-$)+/g, "");
+      if (!base)
+        base =
+          s.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || "heading";
       return base;
     } catch (e) {
-      return s.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') || 'heading';
+      return (
+        s.replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "") || "heading"
+      );
     }
   };
 
   const hashString = (text: string) => {
     let h = 5381;
     for (let i = 0; i < text.length; i++) {
-      h = ((h << 5) + h) + text.charCodeAt(i);
+      h = (h << 5) + h + text.charCodeAt(i);
       h = h >>> 0;
     }
     return h.toString(36).slice(-8);
@@ -57,39 +64,47 @@
   };
 
   function getPageParam() {
-    return new URLSearchParams(window.location.search).get('page');
+    return new URLSearchParams(window.location.search).get("page");
   }
   function setPageParam(param: string) {
     const url = new URL(window.location.href);
-    url.searchParams.set('page', param);
-    history.replaceState(null, '', url.toString());
+    url.searchParams.set("page", param);
+    history.replaceState(null, "", url.toString());
   }
 
   function fileToParam(f: string) {
-    return f.replace(/\//g, '_');
+    return f.replace(/\//g, "_");
   }
 
   function renderFromMap(param: string) {
-    const container = document.querySelector('.docs-content');
+    const container = document.querySelector(".docs-content");
     if (!container) return;
     const stored = document.querySelector(`[data-doc="${param}"]`);
-    container.innerHTML = stored?.innerHTML || '<p style="color:var(--color-coffee-light);padding:2rem;text-align:center">No document available.</p>';
+    container.innerHTML =
+      stored?.innerHTML ||
+      '<p style="color:var(--color-coffee-light);padding:2rem;text-align:center">No document available.</p>';
     buildTOCFromContainer();
   }
 
   function buildTOCFromContainer() {
-    const container = document.querySelector('.docs-content');
-    const nav = document.querySelector('.sidebar-nav');
+    const container = document.querySelector(".docs-content");
+    const nav = document.querySelector(".sidebar-nav");
     if (!container || !nav) return;
-    const headEls = Array.from(container.querySelectorAll('h1, h2, h3'));
+    const headEls = Array.from(container.querySelectorAll("h1, h2, h3"));
     const nodes: any[] = [];
     const stack: any[] = [{ level: 0, children: nodes }];
     headEls.forEach((h) => {
-      if (!h.id) h.id = slugify(h.textContent || '');
+      if (!h.id) h.id = slugify(h.textContent || "");
       const level = parseInt(h.tagName.slice(1), 10);
-      while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+      while (stack.length && stack[stack.length - 1].level >= level)
+        stack.pop();
       const parent = stack[stack.length - 1];
-      const node = { level, id: h.id, text: String(h.textContent || ''), children: [] };
+      const node = {
+        level,
+        id: h.id,
+        text: String(h.textContent || ""),
+        children: [],
+      };
       parent.children.push(node);
       stack.push(node);
     });
@@ -101,7 +116,7 @@
     };
 
     const renderNodes = (ns: any[]) => {
-      if (!ns || !ns.length) return '';
+      if (!ns || !ns.length) return "";
       let s = '<ul class="toc-list">';
       for (const n of ns) {
         const indent = indentForLevel(n.level);
@@ -110,7 +125,7 @@
         if (n.children && n.children.length) s += renderNodes(n.children);
         s += `</li>`;
       }
-      s += '</ul>';
+      s += "</ul>";
       return s;
     };
 
@@ -120,22 +135,25 @@
   function normalizeParam(q: string | null) {
     if (!q) return null;
     let qc = q;
-    if (qc.startsWith('docs_')) qc = qc.replace(/^docs_/, '');
-    if (qc.includes('_') && !docFiles.includes(qc)) {
-      const maybeBase = qc.split('_').pop();
+    if (qc.startsWith("docs_")) qc = qc.replace(/^docs_/, "");
+    if (qc.includes("_") && !docFiles.includes(qc)) {
+      const maybeBase = qc.split("_").pop();
       if (maybeBase && docFiles.includes(maybeBase)) qc = maybeBase;
     }
     return qc;
   }
 
   onMount(() => {
-    const select = document.getElementById('doc-source') as HTMLSelectElement | null;
+    const select = document.getElementById(
+      "doc-source",
+    ) as HTMLSelectElement | null;
     const qRaw = getPageParam();
     const q = normalizeParam(qRaw);
     if (select) {
-      if (q && Array.from(select.options).some((o) => o.value === q)) select.value = q;
+      if (q && Array.from(select.options).some((o) => o.value === q))
+        select.value = q;
       renderFromMap(select.value);
-      select.addEventListener('change', (e) => {
+      select.addEventListener("change", (e) => {
         const val = (e.target as HTMLSelectElement).value;
         setPageParam(val);
         renderFromMap(val);
@@ -144,35 +162,65 @@
     }
 
     // Mobile open/close
-    const mobileOpen = document.getElementById('mobile-toc-open');
-    const mobileClose = document.getElementById('mobile-toc-close');
-    const sidebarEl = document.querySelector('.docs-sidebar');
-    if (mobileOpen) mobileOpen.addEventListener('click', () => sidebarEl?.classList.toggle('toc-open'));
-    if (mobileClose) mobileClose.addEventListener('click', () => sidebarEl?.classList.remove('toc-open'));
-
+    const mobileOpen = document.getElementById("mobile-toc-open");
+    const mobileClose = document.getElementById("mobile-toc-close");
+    const sidebarEl = document.querySelector(".docs-sidebar");
+    if (mobileOpen) {
+      mobileOpen.addEventListener("click", () => {
+        const isOpen = sidebarEl?.classList.toggle("toc-open");
+        // Keep aria-expanded in sync for accessibility
+        if (mobileOpen instanceof HTMLElement)
+          mobileOpen.setAttribute("aria-expanded", String(!!isOpen));
+      });
+    }
+    if (mobileClose) {
+      mobileClose.addEventListener("click", () => {
+        sidebarEl?.classList.remove("toc-open");
+        if (mobileOpen instanceof HTMLElement)
+          mobileOpen.setAttribute("aria-expanded", "false");
+      });
+    }
+    // Close with Escape key when open
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && sidebarEl?.classList.contains("toc-open")) {
+        sidebarEl.classList.remove("toc-open");
+        if (mobileOpen instanceof HTMLElement)
+          mobileOpen.setAttribute("aria-expanded", "false");
+      }
+    });
     // delegate nav clicks
-    const nav = document.querySelector('.sidebar-nav');
+    const nav = document.querySelector(".sidebar-nav");
     if (nav) {
-      nav.addEventListener('click', (ev) => {
-        const a = (ev.target instanceof HTMLElement) ? ev.target.closest('a') : null;
+      nav.addEventListener("click", (ev) => {
+        const a =
+          ev.target instanceof HTMLElement ? ev.target.closest("a") : null;
         if (!a) return;
-        const href = a.getAttribute('href') || '';
-        if (href.startsWith('#')) {
+        const href = a.getAttribute("href") || "";
+        if (href.startsWith("#")) {
           ev.preventDefault();
           const raw = decodeURIComponent(href.slice(1));
           let el = document.getElementById(raw);
           if (!el) {
             const alt = createId(raw);
             el = document.getElementById(alt);
-            if (el) history.replaceState(null, '', `${location.pathname}?page=${select?.value}#${alt}`);
+            if (el)
+              history.replaceState(
+                null,
+                "",
+                `${location.pathname}?page=${select?.value}#${alt}`,
+              );
           } else {
-            history.replaceState(null, '', `${location.pathname}?page=${select?.value}#${raw}`);
+            history.replaceState(
+              null,
+              "",
+              `${location.pathname}?page=${select?.value}#${raw}`,
+            );
           }
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        } else if (href.includes('?page=')) {
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        } else if (href.includes("?page=")) {
           ev.preventDefault();
           const url = new URL(href, location.origin);
-          const param = url.searchParams.get('page');
+          const param = url.searchParams.get("page");
           const hash = url.hash ? url.hash.slice(1) : null;
           if (param) {
             if (select) select.value = param;
@@ -184,9 +232,14 @@
               if (!el2) {
                 const alt2 = createId(rawHash);
                 el2 = document.getElementById(alt2);
-                if (el2) history.replaceState(null, '', `${location.pathname}?page=${param}#${alt2}`);
+                if (el2)
+                  history.replaceState(
+                    null,
+                    "",
+                    `${location.pathname}?page=${param}#${alt2}`,
+                  );
               }
-              if (el2) el2.scrollIntoView({ behavior: 'smooth' });
+              if (el2) el2.scrollIntoView({ behavior: "smooth" });
             } else {
               window.scrollTo({ top: 0 });
             }
@@ -197,14 +250,6 @@
   });
 </script>
 
-<style>
-  .sidebar-controls { display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem; }
-  .sidebar-select { display:block; width:100%; padding:0.45rem 0.7rem; border-radius:0.375rem; }
-  :global(.toc-list) { list-style:none; margin:0; padding-left:0; }
-  :global(.toc-list ul) { margin:0; }
-  :global(.toc-item) { margin:0.25rem 0; }
-</style>
-
 <div>
   <div class="sidebar-controls">
     <select id="doc-source" class="sidebar-select" aria-label="Select doc page">
@@ -212,8 +257,38 @@
         <option value={f}>{labelFor(f)}</option>
       {/each}
     </select>
-    <button id="mobile-toc-close" class="sidebar-close" aria-label="Close table of contents">✕</button>
+    <button
+      id="mobile-toc-close"
+      class="sidebar-close"
+      aria-label="Close table of contents">✕</button
+    >
   </div>
   <h4 class="sidebar-title"><span>☕</span> On this page</h4>
   <nav class="sidebar-nav"></nav>
 </div>
+
+<style>
+  .sidebar-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .sidebar-select {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.375rem;
+  }
+  :global(.toc-list) {
+    list-style: none;
+    margin: 0;
+    padding-left: 0;
+  }
+  :global(.toc-list ul) {
+    margin: 0;
+  }
+  :global(.toc-item) {
+    margin: 0.25rem 0;
+  }
+</style>
