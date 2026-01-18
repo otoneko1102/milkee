@@ -278,6 +278,10 @@ htmlContent = htmlContent.replace(
 ---
 
 <Layout title="Docs">
+  <div class="docs-info">
+    <p>Select the page to read from the table of contents</p>
+    <img id="docs-arrow" src="/img/arrow.png" />
+  </div>
   <div class="docs-container">
     <main class="docs-main">
       <!-- Mobile: button to open table of contents (select moved to sidebar) -->
@@ -314,9 +318,34 @@ htmlContent = htmlContent.replace(
   </div>
 
   <style>
+    .docs-info {
+      max-width: 80rem;
+      margin: 0 auto;
+      padding: 1.5rem;
+      padding-bottom: 0;
+      display: flex;
+      gap: 3rem;
+      justify-content: flex-start;
+    }
+
+    .docs-info p {
+      margin: 0;
+      font-size: 1rem;
+      text-align: center;
+      flex: 0.7;
+      text-align: right;
+    }
+
+    .docs-info #docs-arrow {
+      width: 6rem;
+      height: 3rem;
+      transform: rotate(30deg);
+    }
+
     .docs-container {
       max-width: 80rem;
       margin: 0 auto;
+      padding-top: 0;
       padding: 1.5rem;
       display: flex;
       gap: 3rem;
@@ -486,6 +515,14 @@ htmlContent = htmlContent.replace(
       display: none;
     }
     @media (max-width: 1024px) {
+      .docs-info p {
+        flex: 0.8;
+        font-size: 1rem;
+        text-align: left;
+      }
+      .docs-info #docs-arrow {
+        transform: rotate(-5deg);
+      }
       /* Fixed floating hamburger on the right edge (below header) */
       .mobile-toc-bar {
         display: flex;
