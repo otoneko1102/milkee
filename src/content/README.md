@@ -1,13 +1,10 @@
 # Milkee
 
+[![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![Vitest](https://github.com/otoneko1102/coffeescript-milkee/actions/workflows/test.yml/badge.svg)](https://github.com/otoneko1102/coffeescript-milkee/actions)
 [![npm version](https://img.shields.io/npm/v/milkee.svg)](https://www.npmjs.com/package/milkee)
 [![Downloads](https://img.shields.io/npm/dw/milkee.svg)](https://www.npmjs.com/package/milkee)
 [![License](https://img.shields.io/npm/l/milkee.svg)](./LICENSE)
-
-<a href="https://www.buymeacoffee.com/devuloper" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
-
-<a href='https://ko-fi.com/E1E41LY2C9' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 **English** | [日本語](./README-ja.md)  
 
@@ -164,3 +161,9 @@ Want to create your own Milkee plugin? Check out the plugin documentation:
 
 - [English](./docs/PLUGIN.md)
 - [日本語](./docs/PLUGIN-ja.md)
+
+## Donate
+
+<a href="https://www.buymeacoffee.com/devuloper" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+
+<a href='https://ko-fi.com/E1E41LY2C9' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
