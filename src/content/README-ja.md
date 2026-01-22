@@ -10,7 +10,7 @@
 
 [![Milkee logo](./img/Milkee-logo.png)](https://milkee.org)  
 
-`coffee.config.cjs` を使ったシンプルな CoffeeScript ビルドツール  
+`coffee.config.cjs` を使ったシンプルな CoffeeScript ビルドツール ☕  
 
 公式サイト: https://milkee.org  
 
@@ -83,6 +83,8 @@ module.exports = {
   // (任意) Milkee ビルダーの追加オプション / プラグイン。
   milkee: {
     options: {
+      // アップデート通知を無視します。
+      // ignoreUpdate: false,
       // コンパイル前に出力ディレクトリをリセットします。
       // refresh: false,
       // コンパイル前に「実行しますか？」と確認します。
@@ -118,6 +120,7 @@ module.exports = {
 
 | オプション | 型 | デフォルト | 説明 |
 | :--- | :--- | :--- | :--- |
+| `ignoreUpdate` | `boolean` | `false` | アップデート通知を無視する |
 | `refresh` | `boolean` | `false` | コンパイル前に出力ディレクトリをリセットする |
 | `confirm` | `boolean` | `false` | コンパイル前に「実行しますか？」と確認する |
 | `copy` | `boolean` | `false` | コンパイル後に entry から output へ非 CoffeeScript ファイルをコピーする（`options.join` が false の場合のみ） |

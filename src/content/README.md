@@ -10,7 +10,7 @@
 
 [![Milkee logo](./img/Milkee-logo.png)](https://milkee.org)  
 
-A simple CoffeeScript build tool with [coffee.config.cjs](./temp/coffee.config.cjs)  
+A simple CoffeeScript build tool with [coffee.config.cjs](./temp/coffee.config.cjs) ☕  
 
 Official site: https://milkee.org  
 
@@ -83,9 +83,11 @@ module.exports = {
   // (Optional) Additional options/plugins for the Milkee builder.
   milkee: {
     options: {
+      // Ignore update notifications.
+      // ignoreUpdate: false,
       // Before compiling, reset the directory.
       // refresh: false,
-      // Before compiling, prompt "Do you want to Continue?".
+      // Before compiling, confirm "Do you want to Continue?"
       // confirm: false,
       // After compiling, copy non-coffee files from entry to output directory. (Only works when options.join is false)
       // copy: false,
@@ -118,6 +120,7 @@ These options control Milkee's behavior.
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
+| `ignoreUpdate` | `boolean` | `false` | Ignore update notifications. |
 | `refresh` | `boolean` | `false` | Before compiling, reset the output directory. |
 | `confirm` | `boolean` | `false` | Before compiling, prompt "Do you want to Continue?". |
 | `copy` | `boolean` | `false` | After compiling, copy non-coffee files from entry to output directory. (Only works when `options.join` is `false`) |
