@@ -396,6 +396,29 @@ htmlContent = htmlContent.replace(
       font-weight: 900;
       font-size: 1rem;
       text-decoration: none;
+      /* Add vertical spacing to reflect source heading spacing */
+      padding-top: 1.5rem; /* matches .docs-content h1 top margin */
+      padding-bottom: 1.5rem; /* matches .docs-content h1 bottom margin */
+    }
+
+    .nav-h2 {
+      color: var(--color-coffee-dark);
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      /* Reflect h2 margins from content */
+      padding-top: 2rem; /* matches .docs-content h2 top margin */
+      padding-bottom: 1rem; /* matches .docs-content h2 bottom margin */
+    }
+
+    .nav-h3 {
+      color: var(--color-coffee);
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      /* Reflect h3 margins from content */
+      padding-top: 1.5rem; /* matches .docs-content h3 top margin */
+      padding-bottom: 1rem; /* matches .docs-content h3 bottom margin */
     }
 
     .sidebar-nav .toc-list {

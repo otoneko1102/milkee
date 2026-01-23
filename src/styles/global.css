@@ -23,15 +23,22 @@
 
 html {
   scroll-behavior: smooth;
+  margin: 0; /* remove default html margin */
 }
 
 body {
+  margin: 0; /* reset body margin to avoid browser defaults */
   background-color: var(--color-milk);
   color: var(--color-coffee-dark);
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
   line-height: 1.6;
+}
+
+/* Ensure main elements don't introduce extra spacing */
+main {
+  margin: 0;
 }
 
 /* Typography */

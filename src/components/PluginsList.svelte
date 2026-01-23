@@ -275,29 +275,33 @@
               {pkg.package.description || "No description"}
             </p>
             <div class="plugin-meta">
-              <span class="plugin-meta-item"
-                ><span class="material-icons small" aria-hidden="true"
-                  >person</span
-                ><span>{pkg.package.publisher.username}</span></span
-              >
-              <span class="plugin-meta-item"
-                ><span class="material-icons small" aria-hidden="true"
-                  >calendar_today</span
-                ><span>{new Date(pkg.package.date).toLocaleDateString()}</span
-                ></span
-              >
-              <span class="plugin-meta-item">
-                <span class="material-icons small" aria-hidden="true"
-                  >download</span
+              <div class="plugin-meta-row">
+                <span class="plugin-meta-item"
+                  ><span class="material-icons small" aria-hidden="true"
+                    >person</span
+                  ><span>{pkg.package.publisher.username}</span></span
                 >
-                <span
-                  >{(
-                    pkg.downloads ??
-                    pkg.package.downloads ??
-                    0
-                  ).toLocaleString()}</span
+              </div>
+              <div class="plugin-meta-row">
+                <span class="plugin-meta-item"
+                  ><span class="material-icons small" aria-hidden="true"
+                    >calendar_today</span
+                  ><span>{new Date(pkg.package.date).toLocaleDateString()}</span
+                  ></span
                 >
-              </span>
+                <span class="plugin-meta-item">
+                  <span class="material-icons small" aria-hidden="true"
+                    >download</span
+                  >
+                  <span
+                    >{(
+                      pkg.downloads ??
+                      pkg.package.downloads ??
+                      0
+                    ).toLocaleString()}</span
+                  >
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -436,11 +440,17 @@
     margin-bottom: 0.75rem;
   }
   .plugin-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: block;
     font-size: 0.875rem;
     color: var(--color-coffee-light);
+  }
+  .plugin-meta-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .plugin-meta-row + .plugin-meta-row {
+    margin-top: 0.5rem;
   }
   .plugin-meta-item {
     display: flex;
