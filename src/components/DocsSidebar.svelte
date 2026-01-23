@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from "svelte";
+  import { SITE_CONFIG } from "../settings/config.js";
   export let docFiles: string[] = [];
   // svelte-ignore export_let_unused
   export let defaultFile: string = "";
@@ -85,7 +86,7 @@
     const stored = document.querySelector(`[data-doc="${param}"]`);
     container.innerHTML =
       stored?.innerHTML ||
-      '<p style="color:var(--color-coffee-light);padding:2rem;text-align:center">No document available.</p>';
+      `<p class="no-doc">${SITE_CONFIG.messages.noDocument}</p>`;
     buildTOCFromContainer();
   }
 
@@ -123,8 +124,7 @@
       let s = '<ul class="toc-list">';
       for (const n of ns) {
         const indent = indentForLevel(n.level);
-        const style = `display:block;padding:0.125rem 0;padding-left:${indent}rem`;
-        s += `<li class="toc-item toc-level-${n.level}" style="margin:0.25rem 0"><a href="#${n.id}" class="nav-h${n.level}" style="${style}">${n.text}</a>`;
+        s += `<li class="toc-item toc-level-${n.level}"><a href="#${n.id}" class="nav-h${n.level} toc-link">${n.text}</a>`;
         if (n.children && n.children.length) s += renderNodes(n.children);
         s += `</li>`;
       }
@@ -276,7 +276,7 @@
 </script>
 
 <div>
-  <div class="sidebar-whitespace" style="height: 4rem"></div>
+  <div class="sidebar-whitespace"></div>
   <div class="sidebar-controls">
     <select id="doc-source" class="sidebar-select" aria-label="Select doc page">
       {#each docFiles as f}

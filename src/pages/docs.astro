@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import { marked } from "marked";
 import DocsSidebar from "../components/DocsSidebar.svelte";
+import { SITE_CONFIG } from "../settings/config.js";
 
 // No local doc content; will fetch documents dynamically from GitHub
 const docContent = "";
@@ -239,8 +240,8 @@ const buildTOCHtml = (hs: Heading[]) => {
     let html = '<ul class="toc-list">';
     for (const n of nodes) {
       const indent = indentForLevel(n.level);
-      const style = `display:block;padding:0.125rem 0;padding-left:${indent}rem`;
-      html += `<li class="toc-item toc-level-${n.level}"><a href="#${n.id}" class="nav-h${n.level}" style="${style}">${n.text}</a>`;
+      const style = ``;
+      html += `<li class="toc-item toc-level-${n.level}"><a href="#${n.id}" class="nav-h${n.level} toc-link">${n.text}</a>`;
       if (n.children && n.children.length) html += renderNodes(n.children);
       html += `</li>`;
     }
@@ -255,7 +256,7 @@ const buildTOCHtml = (hs: Heading[]) => {
 const defaultFile = docFiles[0];
 let htmlContent: string =
   htmlMap[defaultFile] ||
-  '<p style="color:var(--color-coffee-light);padding:2rem;text-align:center">No document available.</p>';
+  `<p class="no-doc">${SITE_CONFIG.messages.noDocument}</p>`;
 const headings = headingsByFile[defaultFile] || [];
 const tocHtml = buildTOCHtml(headings);
 // Pre-serialize maps for safe inlining into client script
@@ -297,7 +298,7 @@ htmlContent = htmlContent.replace(
       <article class="docs-content" set:html={htmlContent} />
 
       <!-- Server-rendered store of all docs (hidden) -->
-      <div class="docs-store" style="display:none" aria-hidden="true">
+      <div class="docs-store" aria-hidden="true">
         {
           docFiles.map((f) => (
             // Use raw HTML from the prebuilt map so client can query `[data-doc]` elements

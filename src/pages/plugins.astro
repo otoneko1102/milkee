@@ -4,16 +4,10 @@ import PluginsList from "../components/PluginsList.svelte";
 ---
 
 <Layout title="Plugins">
-  <main style="max-width:56rem;margin:0 auto;padding:1.5rem;">
-    <div style="margin-bottom:2rem;text-align:center;">
-      <h1
-        style="font-size:2.25rem;font-weight:700;color:var(--color-coffee-dark);margin-bottom:0.5rem;"
-      >
-        Plugin Library
-      </h1>
-      <p style="color:var(--color-coffee-light);">
-        Extend Milkee with community packages.
-      </p>
+  <main class="page-main">
+    <div class="mb-8 text-center">
+      <h1 class="page-title">Plugin Library</h1>
+      <p class="text-coffee-light">Extend Milkee with community packages.</p>
     </div>
 
     <PluginsList client:load />

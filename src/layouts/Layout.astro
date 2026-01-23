@@ -9,10 +9,11 @@ interface Props {
 }
 
 import { SITE } from "../lib/site";
+import { SITE_CONFIG } from "../settings/config.js";
 
 const {
   title,
-  description = "A delightful build tool for CoffeeScript. Simple, fast, and creamy smooth.",
+  description = SITE_CONFIG.description,
   image = SITE.image,
   url = SITE.url,
 } = Astro.props;
@@ -23,7 +24,8 @@ const startYear = 2025;
 const yearRange =
   startYear === currentYear ? startYear : `${startYear} - ${currentYear}`;
 
-const pageTitle = title === "Home" ? "Milkee" : `${title} | Milkee`;
+const pageTitle =
+  title === "Home" ? SITE_CONFIG.name : `${title} | ${SITE_CONFIG.name}`;
 const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
 ---
 
@@ -42,7 +44,7 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
     <meta property="og:description" content={description} />
     <meta property="og:image" content={image} />
     <meta property="og:url" content={pageUrl} />
-    <meta property="og:site_name" content="Milkee" />
+    <meta property="og:site_name" content={SITE_CONFIG.name} />
     <meta property="og:locale" content="ja_JP" />
 
     <!-- Twitter Card -->
@@ -59,103 +61,43 @@ const pageUrl = `${url}${Astro.url.pathname === "/" ? "" : Astro.url.pathname}`;
     />
   </head>
   <body>
-    <header
-      style="
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 50;
-      background-color: var(--color-coffee-dark);
-      color: var(--color-milk);
-      padding: 0.75rem 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    "
-    >
-      <div
-        style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        padding: 0 1rem;
-      "
-      >
-        <div
-          style="
-          font-weight: 700;
-          font-size: 1.25rem;
-          letter-spacing: 0.05em;
-        "
-        >
-          <a href="/">Milkee</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <div class="site-brand">
+          <a href="/">{SITE_CONFIG.name}</a>
         </div>
-        <nav
-          style="
-          display: flex;
-          gap: 0.75rem;
-          font-weight: 500;
-          font-size: 0.875rem;
-        "
-        >
-          <a href="/docs" class="hover:text-milk-dark">Docs</a>
-          <a href="/plugins" class="hover:text-milk-dark">Plugins</a>
-          <a
-            href="https://www.npmjs.com/package/milkee"
-            target="_blank"
-            rel="noreferrer"
-            class="hover:text-milk-dark">npm</a
+        <nav class="site-nav">
+          <a href={SITE_CONFIG.nav[0].href} class="hover:text-milk-dark"
+            >{SITE_CONFIG.nav[0].label}</a
+          >
+          <a href={SITE_CONFIG.nav[1].href} class="hover:text-milk-dark"
+            >{SITE_CONFIG.nav[1].label}</a
           >
           <a
-            href="https://github.com/otoneko1102/coffeescript-milkee"
+            href={SITE_CONFIG.nav[2].href}
             target="_blank"
             rel="noreferrer"
-            class="hover:text-milk-dark">GitHub</a
+            class="hover:text-milk-dark">{SITE_CONFIG.nav[2].label}</a
+          >
+          <a
+            href={SITE_CONFIG.nav[3].href}
+            target="_blank"
+            rel="noreferrer"
+            class="hover:text-milk-dark">{SITE_CONFIG.nav[3].label}</a
           >
         </nav>
       </div>
     </header>
 
-    <div style="min-height: 100vh; padding-top: 70px;">
+    <div class="site-main">
       <slot />
     </div>
 
-    <footer
-      style="
-      background-color: var(--color-milk-cream);
-      color: var(--color-coffee-light);
-      padding: 2rem;
-      text-align: center;
-      margin-top: 3rem;
-      border-top: 1px solid var(--color-milk-dark);
-    "
-    >
+    <footer class="site-footer">
       <p>
-        &copy; {yearRange} Milkee Project by otoneko.
+        &copy; {yearRange}
+        {SITE_CONFIG.name} Project by {SITE_CONFIG.author}.
       </p>
     </footer>
-
-    <style>
-      a {
-        color: inherit;
-        text-decoration: none;
-        transition: color 0.2s ease;
-      }
-
-      @media (min-width: 768px) {
-        header > div {
-          padding: 0 2rem !important;
-        }
-
-        header nav {
-          gap: 1.5rem !important;
-          font-size: 1rem !important;
-        }
-
-        header > div > div {
-          font-size: 1.5rem !important;
-        }
-      }
-    </style>
   </body>
 </html>
