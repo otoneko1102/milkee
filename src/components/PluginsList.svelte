@@ -10,16 +10,82 @@
       links: { npm: string };
       publisher: { username: string };
       keywords?: string[];
+      downloads?: number; // allow downloads here as some code checks pkg.package.downloads
     };
-    score: { detail: { popularity: number } };
+    score?: { detail?: { popularity?: number } };
+    downloads?: number; // last-month downloads (added by client fetch)
   }
 
   let packages: Package[] = [];
   let searchInput = "";
   let activeQuery = "";
-  let sortBy: "date" | "name" | "popularity" = "date";
+  let sortBy: "date" | "name" | "downloads" = "date";
   let order: "asc" | "desc" = "desc";
   let loading = true;
+
+  // Track previous mode so we only apply the mode default when the mode changes
+  let prevSortBy: typeof sortBy | null = null;
+
+  // Labels for the order buttons that change depending on mode
+  let orderAscLabel = "↑ Asc";
+  let orderDescLabel = "↓ Desc";
+
+  // When the sort mode changes, apply sensible defaults per user request
+  $: if (prevSortBy !== sortBy) {
+    if (sortBy === "name") {
+      // A-Z is default
+      order = "asc";
+    } else if (sortBy === "downloads") {
+      // most downloads first is default
+      order = "desc";
+    } else {
+      // date: keep current behavior (recent first)
+      order = "desc";
+    }
+    // @ts-ignore
+    prevSortBy = sortBy;
+  }
+
+  // Update visible labels for the order buttons based on mode
+  $: {
+    if (sortBy === "name") {
+      orderAscLabel = "A → Z";
+      orderDescLabel = "Z → A";
+    } else if (sortBy === "downloads") {
+      // Left button shows most downloads, right shows least downloads
+      orderAscLabel = "Most downloads";
+      orderDescLabel = "Least downloads";
+    } else {
+      // Date: left = Newest, right = Oldest
+      orderAscLabel = "Newest";
+      orderDescLabel = "Oldest";
+    }
+  }
+
+  // Clicking left/right buttons maps to an order value depending on the mode
+  function setLeftOrder() {
+    if (sortBy === "name")
+      order = "asc"; // A → Z
+    else if (sortBy === "downloads")
+      order = "desc"; // Most downloads first
+    else order = "desc"; // Date: Newest first
+    // eslint-disable-next-line no-console
+    console.debug("setLeftOrder -> order", order, "mode", sortBy);
+  }
+
+  function setRightOrder() {
+    if (sortBy === "name")
+      order = "desc"; // Z → A
+    else if (sortBy === "downloads")
+      order = "asc"; // Least downloads first
+    else order = "asc"; // Date: Oldest first
+    // eslint-disable-next-line no-console
+    console.debug("setRightOrder -> order", order, "mode", sortBy);
+  }
+
+  // Active state for left/right buttons depends on mode since meaning flips for some modes
+  $: leftActive = sortBy === "name" ? order === "asc" : order === "desc";
+  $: rightActive = sortBy === "name" ? order === "desc" : order === "asc"; // unchanged logic; references downloads via sortBy value checks elsewhere
 
   onMount(async () => {
     try {
@@ -28,8 +94,42 @@
       );
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      packages = data.objects || [];
+      packages = (data.objects || []).map((p: Package) => ({
+        ...p,
+        downloads: 0,
+      }));
       console.log("Loaded packages:", packages.length);
+
+      // Fetch last-month downloads for each package in parallel (best-effort).
+      const downloadPromises = packages.map((p) =>
+        fetch(
+          `https://api.npmjs.org/downloads/point/last-month/${encodeURIComponent(p.package.name)}`,
+        )
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null),
+      );
+
+      const downloadResults = await Promise.allSettled(downloadPromises);
+      downloadResults.forEach((res, idx) => {
+        if (
+          res.status === "fulfilled" &&
+          res.value &&
+          typeof res.value.downloads === "number"
+        ) {
+          packages[idx].downloads = Number(res.value.downloads);
+        } else {
+          packages[idx].downloads = 0;
+        }
+      });
+
+      // Small debug sample
+      // eslint-disable-next-line no-console
+      console.debug(
+        "Sample downloads:",
+        packages
+          .slice(0, 6)
+          .map((p) => ({ name: p.package.name, d: p.downloads })),
+      );
     } catch (err) {
       console.error("Failed to fetch plugins:", err);
       packages = [];
@@ -66,8 +166,19 @@
       vb = b.package.name;
       return order === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
     } else {
-      va = a.score.detail.popularity;
-      vb = b.score.detail.popularity;
+      // Use downloads (last-month) as the metric; fallback to 0
+      va = Number(a?.downloads ?? a?.package?.downloads ?? 0);
+      vb = Number(b?.downloads ?? b?.package?.downloads ?? 0);
+    }
+
+    // For debugging, log when sorting by downloads and order changes
+    if (sortBy === "downloads") {
+      // eslint-disable-next-line no-console
+      console.debug("Sorting by downloads", {
+        order,
+        vaSample: va,
+        vbSample: vb,
+      });
     }
 
     return order === "asc" ? va - vb : vb - va;
@@ -107,31 +218,35 @@
   <div class="plugins-controls">
     <div class="controls-left">
       <!-- svelte-ignore a11y_label_has_associated_control -->
-      <label class="control-label">Sort By:</label>
-      <select bind:value={sortBy} class="control-select">
+      <label for="sort-by" class="control-label">Sort By:</label>
+      <select id="sort-by" bind:value={sortBy} class="control-select">
         <option value="date">Recently Updated</option>
         <option value="name">Name (A-Z)</option>
-        <option value="popularity">Popularity</option>
+        <option value="downloads">Downloads</option>
       </select>
-    </div>
 
-    <div class="controls-mid">
-      <!-- svelte-ignore a11y_label_has_associated_control -->
-      <label class="control-label">Order:</label>
-      <button
-        on:click={() => (order = "asc")}
-        class="order-btn"
-        class:active={order === "asc"}
-      >
-        ↑ Asc
-      </button>
-      <button
-        on:click={() => (order = "desc")}
-        class="order-btn"
-        class:active={order === "desc"}
-      >
-        ↓ Desc
-      </button>
+      <div class="order-group" role="group" aria-labelledby="order-label">
+        <!-- svelte-ignore a11y_label_has_associated_control -->
+        <label id="order-label" class="control-label">Order:</label>
+        <button
+          on:click={setLeftOrder}
+          class="order-btn"
+          class:active={leftActive}
+          aria-pressed={leftActive}
+          title={orderAscLabel}
+        >
+          {orderAscLabel}
+        </button>
+        <button
+          on:click={setRightOrder}
+          class="order-btn"
+          class:active={rightActive}
+          aria-pressed={rightActive}
+          title={orderDescLabel}
+        >
+          {orderDescLabel}
+        </button>
+      </div>
     </div>
 
     <div class="result-count">{resultCount}</div>
@@ -171,6 +286,18 @@
                 ><span>{new Date(pkg.package.date).toLocaleDateString()}</span
                 ></span
               >
+              <span class="plugin-meta-item">
+                <span class="material-icons small" aria-hidden="true"
+                  >download</span
+                >
+                <span
+                  >{(
+                    pkg.downloads ??
+                    pkg.package.downloads ??
+                    0
+                  ).toLocaleString()}</span
+                >
+              </span>
             </div>
           </div>
         </div>
@@ -211,12 +338,20 @@
     justify-content: space-between;
     margin-bottom: 2rem;
   }
-  .controls-left,
-  .controls-mid {
+  .controls-left {
     display: flex;
     gap: 1rem;
     align-items: center;
+    flex-wrap: wrap;
   }
+
+  /* Group that contains the order buttons aligned to the left side */
+  .order-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
   .control-label {
     font-weight: 700;
     color: var(--color-coffee);

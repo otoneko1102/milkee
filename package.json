@@ -19,6 +19,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
+    "@types/node": "^25.0.10",
     "prettier": "^3.7.4",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-svelte": "^3.4.1"
