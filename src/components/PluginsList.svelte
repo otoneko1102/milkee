@@ -53,8 +53,8 @@
       orderDescLabel = "Z → A";
     } else if (sortBy === "downloads") {
       // Left button shows most downloads, right shows least downloads
-      orderAscLabel = "Most downloads";
-      orderDescLabel = "Least downloads";
+      orderAscLabel = "Most";
+      orderDescLabel = "Least";
     } else {
       // Date: left = Newest, right = Oldest
       orderAscLabel = "Newest";
