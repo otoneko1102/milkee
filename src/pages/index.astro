@@ -2,6 +2,7 @@
 import Layout from "../layouts/Layout.astro";
 import InstallBox from "../components/InstallBox.svelte";
 import MilkeeStats from "../components/MilkeeStats.svelte";
+import Warn from "../components/Warn.astro";
 
 // Runtime-only fetching: remove build-time network request so values are not baked into the build.
 // The client script will fetch and populate the actual values when the page loads.
@@ -106,6 +107,10 @@ const stats = { version: "-", lastUpdated: "-", downloads: "-" };
     </p>
 
     <MilkeeStats client:load />
+
+    <Warn>
+      <p>Versions <code>v0</code>, <code>v1</code>, <code>v2.0</code> to <code>v2.2</code> are no longer supported.</p>
+    </Warn>
 
     <InstallBox client:load />
 

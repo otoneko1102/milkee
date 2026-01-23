@@ -1,0 +1,84 @@
+<div class="warn-background">
+  <div class="warn-wrapper" role="note" aria-label="Warning">
+    <div class="warn-icon" aria-hidden="true">
+      <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+    </div>
+    <div class="warn-content">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap');
+  .warn-background {
+    width: 100%;
+    max-width: 42rem;
+    padding: 0;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+  }
+
+  .warn-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    border: 1px solid var(--warn-border);
+    background-color: var(--warn-color);
+    color: var(--warn-text);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 0 rgba(27,31,35,0.04);
+  }
+
+  :root {
+    --warn-border: #f1c40f;
+    --warn-color: #fff8dc;
+    --warn-text: #000000;
+    --warn-icon-bg: #f4d35e;
+    --warn-icon-offset: 0.10rem; /* 微調整用 */
+  }
+
+  .warn-icon {
+    flex: 0 0 2.25rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+    color: var(--warn-text);
+    border-radius: 0.375rem;
+  }
+
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 1.2rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    color: currentColor;
+    transform: translateY(var(--warn-icon-offset));
+    will-change: transform;
+  }
+
+  .warn-content {
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    margin: 0;
+  }
+
+  .warn-content * {
+    margin: 0 !important;
+    margin-block-start: 0 !important;
+    margin-block-end: 0 !important;
+  }
+</style>
