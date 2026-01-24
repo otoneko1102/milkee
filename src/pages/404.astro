@@ -1,0 +1,28 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { SITE_CONFIG } from "../settings/config.js";
+export const prerender = true;
+const title = "404: Not Found";
+---
+
+<Layout title={title}>
+  <main class="container flex flex-col items-center justify-center text-center">
+    <div class="max-w-2xl">
+      <h1 class="text-6xl font-bold mb-4">404</h1>
+      <h2 class="text-2xl mb-4">Not found</h2>
+      <p class="mb-6">
+        The page you are looking for may no longer exist or may have moved.
+      </p>
+
+      <div class="flex gap-3 justify-center">
+        <a href="/" class="btn-primary">Home</a>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  main {
+    padding-top: 10vh;
+  }
+</style>
