@@ -9,6 +9,7 @@ import { SITE_CONFIG } from "../settings/config.js";
 // The client script will fetch and populate the actual values when the page loads.
 
 const stats = { version: "-", lastUpdated: "-", downloads: "-" };
+const descLines = SITE_CONFIG.description.split(/\r\n|\r|\n|<br\s*\/?\>/g);
 ---
 
 <Layout title="Home">
@@ -28,7 +29,16 @@ const stats = { version: "-", lastUpdated: "-", downloads: "-" };
 
     <h1 class="hero-title">{SITE_CONFIG.name}</h1>
 
-    <p class="hero-subtitle">{SITE_CONFIG.description}</p>
+    <p class="hero-subtitle">
+      {
+        descLines.map((line, i) => (
+          <span>
+            {line}
+            {i < descLines.length - 1 ? <br /> : ""}
+          </span>
+        ))
+      }
+    </p>
 
     <MilkeeStats client:load />
 
