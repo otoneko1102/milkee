@@ -629,6 +629,10 @@ a:hover {
     font-size: 1.5rem;
   }
 
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
   .grid-cols-3 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
